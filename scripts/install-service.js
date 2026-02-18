@@ -25,7 +25,8 @@ function installLinuxService() {
   const serviceName = 'securevault';
   const serviceFile = `/etc/systemd/system/${serviceName}.service`;
   const user = process.env.USER || process.env.USERNAME || 'root';
-  const nodePath = execSync('which node').toString().trim();
+  // Use process.execPath for portability, or 'which node' on Unix systems
+  const nodePath = process.execPath || execSync('which node').toString().trim();
   const npmGlobalPath = execSync('npm root -g').toString().trim();
   const securevaultPath = join(npmGlobalPath, 'securevault');
 
@@ -74,7 +75,8 @@ WantedBy=multi-user.target
 function installMacOSService() {
   const plistName = 'com.securevault.app';
   const plistPath = join(homedir(), 'Library', 'LaunchAgents', `${plistName}.plist`);
-  const nodePath = execSync('which node').toString().trim();
+  // Use process.execPath for portability, or 'which node' on Unix systems
+  const nodePath = process.execPath || execSync('which node').toString().trim();
   const npmGlobalPath = execSync('npm root -g').toString().trim();
   const securevaultPath = join(npmGlobalPath, 'securevault');
 

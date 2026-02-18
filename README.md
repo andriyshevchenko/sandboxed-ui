@@ -77,7 +77,7 @@ After global installation, run:
 npm run install-service
 
 # On Linux, you may need sudo:
-sudo npm run install-service -g
+sudo npm run install-service
 ```
 
 ### Manual Setup
@@ -266,7 +266,7 @@ Make sure you have the required system libraries:
 
 If you get permission errors when installing as a service:
 ```bash
-sudo npm run install-service -g
+sudo npm run install-service
 ```
 
 ### Port Already in Use
