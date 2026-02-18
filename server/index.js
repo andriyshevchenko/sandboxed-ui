@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import keytar from 'keytar';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 const app = express();
 const PORT = 3001;
@@ -8,6 +11,47 @@ const SERVICE_NAME = 'SecureVault';
 
 // Valid secret categories - shared constant to avoid duplication
 const VALID_CATEGORIES = ['password', 'api-key', 'token', 'certificate', 'note', 'other'];
+
+// Metadata storage path
+const getMetadataPath = () => {
+  const homeDir = os.homedir();
+  const configDir = process.platform === 'win32' 
+    ? path.join(homeDir, 'AppData', 'Local', 'SecureVault')
+    : process.platform === 'darwin'
+    ? path.join(homeDir, 'Library', 'Application Support', 'SecureVault')
+    : path.join(homeDir, '.config', 'securevault');
+  
+  // Ensure directory exists
+  if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
+  }
+  
+  return path.join(configDir, 'metadata.json');
+};
+
+// Load metadata from disk
+const loadMetadata = () => {
+  try {
+    const metadataPath = getMetadataPath();
+    if (fs.existsSync(metadataPath)) {
+      const data = fs.readFileSync(metadataPath, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.warn('⚠️  Failed to load metadata from disk:', error.message);
+  }
+  return [];
+};
+
+// Save metadata to disk
+const saveMetadata = (metadata) => {
+  try {
+    const metadataPath = getMetadataPath();
+    fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), 'utf8');
+  } catch (error) {
+    console.error('❌ Failed to save metadata to disk:', error.message);
+  }
+};
 
 // CORS configuration - restrict to localhost origins for security
 const allowedOrigins = [
@@ -59,10 +103,9 @@ try {
 
 // In-memory cache for secret metadata (keychain only stores key-value pairs)
 // We'll store the full secret objects here, but the values will be in the keychain
-// NOTE: Metadata is stored in memory and will be lost on server restart.
-// Secret values persist in the OS keychain but become inaccessible through the app until recreated.
-// For production use, consider persisting metadata to disk or storing it alongside values in keychain.
-let secretsMetadata = [];
+// Metadata is now persisted to disk and loaded on startup
+let secretsMetadata = loadMetadata();
+console.log(`📂 Loaded ${secretsMetadata.length} secret(s) from persistent storage`);
 
 // Storage abstraction layer
 const storage = {
@@ -167,6 +210,9 @@ app.post('/api/secrets', async (req, res) => {
     const metadata = { id, title: title.trim(), category, notes, createdAt, updatedAt };
     secretsMetadata.push(metadata);
     
+    // Persist metadata to disk
+    saveMetadata(secretsMetadata);
+    
     res.status(201).json({ ...metadata, value });
   } catch (error) {
     console.error('Error creating secret:', error);
@@ -224,6 +270,9 @@ app.put('/api/secrets/:id', async (req, res) => {
       updatedAt: updatedAt !== undefined ? updatedAt : existingMeta.updatedAt
     };
     
+    // Persist metadata to disk
+    saveMetadata(secretsMetadata);
+    
     res.json({ ...secretsMetadata[metaIndex], value: secretValue });
   } catch (error) {
     console.error('Error updating secret:', error);
@@ -246,6 +295,9 @@ app.delete('/api/secrets/:id', async (req, res) => {
     
     // Delete metadata
     secretsMetadata.splice(metaIndex, 1);
+    
+    // Persist metadata to disk
+    saveMetadata(secretsMetadata);
     
     res.status(204).send();
   } catch (error) {
