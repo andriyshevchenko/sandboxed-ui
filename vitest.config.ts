@@ -1,10 +1,9 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react-swc'
-import { fileURLToPath } from 'url'
-import { dirname, resolve } from 'path'
+import { resolve } from 'path'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+// Align with vite.config.ts for consistent alias resolution
+const projectRoot = process.env.PROJECT_ROOT || import.meta.dirname
 
 export default defineConfig({
   plugins: [react()],
@@ -17,7 +16,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
+      '@': resolve(projectRoot, './src'),
     },
   },
 })

@@ -22,8 +22,8 @@ const allowedOrigins = [
 const corsOptions = {
   origin: (origin, callback) => {
     // Only allow specific localhost origins for security.
-    // Requests without an Origin header (e.g., curl or server-to-server) are intentionally rejected.
-    // Note: callback(null, false) only omits CORS headers; non-browser clients can still call the API.
+    // Note: callback(null, false) omits CORS headers but does NOT reject the request.
+    // Non-browser clients (e.g., curl, server-to-server) can still call the API.
     // The localhost binding (127.0.0.1) provides the actual network-level restriction.
     if (!origin) {
       return callback(null, false);

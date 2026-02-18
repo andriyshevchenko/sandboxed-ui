@@ -22,7 +22,9 @@ describe('SecureVault API', () => {
   let app;
 
   beforeAll(async () => {
-    // Dynamically import the server code after mocking
+    // Set up a test Express app after mocking dependencies
+    // Note: These tests re-implement API routes for isolated testing with mocked keytar.
+    // For integration tests against the real server, see e2e tests.
     app = express();
     app.use(cors());
     app.use(express.json());
