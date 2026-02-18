@@ -149,7 +149,7 @@ This project includes GitHub Actions workflows for:
 
 - All secret values are stored in the OS keychain using the `keytar` library
 - The backend HTTP API listens on `localhost:3001` (127.0.0.1) by default and is restricted to local connections only
-- CORS is configured to only allow requests from localhost frontend origins (ports 5000 and 3000)
+- CORS is configured to only allow requests from localhost frontend origins (ports 3000, 5000, and 5173 for Vite dev server)
 - Do not expose the backend port to untrusted networks or bind it to `0.0.0.0`
 - No data is sent to any external servers
 - Secret metadata (title, category, notes) is stored in memory on the backend

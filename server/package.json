@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Legacy manifest retained only to satisfy tooling. All scripts and dependencies are managed from the repository root package.json.",
+  "description": "Legacy manifest retained only to satisfy tooling. All scripts and dependencies are managed from the repository root package.json. Note: Dependencies like cross-env are installed from root; tests should be run from repository root directory using 'npm run test:server'.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

@@ -44,13 +44,24 @@ describe('SecureVault API', () => {
     // GET /api/secrets
     app.get('/api/secrets', async (req, res) => {
       try {
-        const secrets = [];
-        for (const meta of secretsMetadata) {
-          const value = await storage.getPassword('SecureVault', meta.id);
-          if (value) {
-            secrets.push({ ...meta, value });
+        const secretPromises = secretsMetadata.map(async (meta) => {
+          try {
+            const value = await storage.getPassword('SecureVault', meta.id);
+            if (!value) {
+              return null;
+            }
+            return {
+              ...meta,
+              value: value
+            };
+          } catch (error) {
+            console.error(`Error getting secret ${meta.id}:`, error);
+            return null;
           }
-        }
+        });
+
+        const secretsWithNulls = await Promise.all(secretPromises);
+        const secrets = secretsWithNulls.filter(Boolean);
         res.json(secrets);
       } catch (error) {
         res.status(500).json({ error: 'Failed to fetch secrets' });
@@ -58,12 +69,29 @@ describe('SecureVault API', () => {
     });
 
     // POST /api/secrets
+    // POST /api/secrets
     app.post('/api/secrets', async (req, res) => {
       try {
         const { id, title, value, category, notes, createdAt, updatedAt } = req.body;
         
         if (!id || !title || !value || !category) {
           return res.status(400).json({ error: 'Missing required fields' });
+        }
+        
+        // Validate title
+        if (typeof title !== 'string' || title.trim() === '') {
+          return res.status(400).json({ error: 'Title must be a non-empty string' });
+        }
+        
+        // Validate category
+        const validCategories = ['password', 'api-key', 'token', 'certificate', 'note', 'other'];
+        if (!validCategories.includes(category)) {
+          return res.status(400).json({ error: 'Invalid category. Must be one of: ' + validCategories.join(', ') });
+        }
+        
+        // Validate value
+        if (typeof value !== 'string' || value === '') {
+          return res.status(400).json({ error: 'Secret value must be a non-empty string' });
         }
 
         // Check for duplicate ID
@@ -73,7 +101,7 @@ describe('SecureVault API', () => {
         }
 
         await storage.setPassword('SecureVault', id, value);
-        const metadata = { id, title, category, notes, createdAt, updatedAt };
+        const metadata = { id, title: title.trim(), category, notes, createdAt, updatedAt };
         secretsMetadata.push(metadata);
         
         res.status(201).json({ ...metadata, value });
@@ -93,6 +121,22 @@ describe('SecureVault API', () => {
           return res.status(404).json({ error: 'Secret not found' });
         }
         
+        // Validate title if provided
+        if (title !== undefined && (typeof title !== 'string' || title.trim() === '')) {
+          return res.status(400).json({ error: 'Title must be a non-empty string' });
+        }
+        
+        // Validate category if provided
+        const validCategories = ['password', 'api-key', 'token', 'certificate', 'note', 'other'];
+        if (category !== undefined && !validCategories.includes(category)) {
+          return res.status(400).json({ error: 'Invalid category. Must be one of: ' + validCategories.join(', ') });
+        }
+        
+        // Validate notes if provided
+        if (notes !== undefined && typeof notes !== 'string') {
+          return res.status(400).json({ error: 'Notes must be a string' });
+        }
+        
         const existingMeta = secretsMetadata[metaIndex];
         
         // Get current secret value
@@ -103,6 +147,9 @@ describe('SecureVault API', () => {
           if (value === null || value === '') {
             return res.status(400).json({ error: 'Secret value cannot be empty' });
           }
+          if (typeof value !== 'string') {
+            return res.status(400).json({ error: 'Secret value must be a string' });
+          }
           await storage.setPassword('SecureVault', id, value);
           secretValue = value;
         }
@@ -110,7 +157,7 @@ describe('SecureVault API', () => {
         // Update metadata, preserving existing fields when omitted
         secretsMetadata[metaIndex] = {
           ...existingMeta,
-          title: title !== undefined ? title : existingMeta.title,
+          title: title !== undefined ? title.trim() : existingMeta.title,
           category: category !== undefined ? category : existingMeta.category,
           notes: notes !== undefined ? notes : existingMeta.notes,
           updatedAt: updatedAt !== undefined ? updatedAt : existingMeta.updatedAt

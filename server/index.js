@@ -121,6 +121,22 @@ app.post('/api/secrets', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
+    // Validate title
+    if (typeof title !== 'string' || title.trim() === '') {
+      return res.status(400).json({ error: 'Title must be a non-empty string' });
+    }
+    
+    // Validate category
+    const validCategories = ['password', 'api-key', 'token', 'certificate', 'note', 'other'];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({ error: 'Invalid category. Must be one of: ' + validCategories.join(', ') });
+    }
+    
+    // Validate value
+    if (typeof value !== 'string' || value === '') {
+      return res.status(400).json({ error: 'Secret value must be a non-empty string' });
+    }
+    
     // Check for duplicate ID
     const existingSecret = secretsMetadata.find(s => s.id === id);
     if (existingSecret) {
@@ -130,8 +146,8 @@ app.post('/api/secrets', async (req, res) => {
     // Store the secret value in keychain
     await storage.setPassword(SERVICE_NAME, id, value);
     
-    // Store metadata
-    const metadata = { id, title, category, notes, createdAt, updatedAt };
+    // Store metadata with trimmed title
+    const metadata = { id, title: title.trim(), category, notes, createdAt, updatedAt };
     secretsMetadata.push(metadata);
     
     res.status(201).json({ ...metadata, value });
