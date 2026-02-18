@@ -19,8 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD workflows
 - NPM global package installation
 - CLI command: `securevault`
-- Auto-start on system boot support (Linux, macOS, Windows)
-- Installation scripts for system services
 - Full documentation
 
 ### Features
@@ -30,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Beautiful dark-themed UI with animations
 - Cross-platform support
 - Single command installation and execution
-- Optional system service for running on boot
 
 ### Security
 - No cloud storage - all data stays local
@@ -41,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Docker support (replaced with direct NPM installation)
 - Docker-related files and scripts
+- OS boot integration scripts (focus on robust CLI command)
 
 ## [Unreleased]
 

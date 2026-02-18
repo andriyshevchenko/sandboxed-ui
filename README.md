@@ -4,7 +4,7 @@
 [![npm version](https://badge.fury.io/js/securevault.svg)](https://www.npmjs.com/package/securevault)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A secure, local secret manager application that uses your operating system's native keychain to store sensitive information like passwords, API keys, and credentials. Install globally via NPM and optionally run on system boot.
+A secure, local secret manager application that uses your operating system's native keychain to store sensitive information like passwords, API keys, and credentials. Install globally via NPM and run with a simple command.
 
 ## Features
 
@@ -15,7 +15,6 @@ A secure, local secret manager application that uses your operating system's nat
 - ✂️ **Copy to Clipboard**: One-click copy for quick access
 - 🔐 **Privacy First**: No cloud storage, all data stays on your machine
 - 📦 **Single Package**: Install globally via NPM - no Docker required
-- 🚀 **Auto-Start**: Optionally run on system boot
 - ✅ **Fully Tested**: Comprehensive unit and E2E tests
 
 ## Quick Start
@@ -64,85 +63,6 @@ npm start
   - **Linux**: `sudo apt-get install libsecret-1-dev` (Debian/Ubuntu) or equivalent
   - **Windows**: No additional setup needed
 
-## Running on System Boot
-
-SecureVault can be configured to start automatically when your computer boots.
-
-### Automatic Installation
-
-After global installation, run:
-
-```bash
-# Install as system service
-npm run install-service
-
-# On Linux, you may need sudo:
-sudo npm run install-service
-```
-
-### Manual Setup
-
-#### Linux (systemd)
-
-```bash
-# Create service file
-sudo nano /etc/systemd/system/securevault.service
-
-# Add the following content:
-[Unit]
-Description=SecureVault - Secure Secret Manager
-After=network.target
-
-[Service]
-Type=simple
-User=YOUR_USERNAME
-ExecStart=/usr/bin/securevault
-Restart=on-failure
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-
-# Enable and start
-sudo systemctl enable securevault
-sudo systemctl start securevault
-```
-
-#### macOS (launchd)
-
-```bash
-# Create plist file
-nano ~/Library/LaunchAgents/com.securevault.app.plist
-
-# Add the following content:
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.securevault.app</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>/usr/local/bin/securevault</string>
-    </array>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <true/>
-</dict>
-</plist>
-
-# Load the agent
-launchctl load ~/Library/LaunchAgents/com.securevault.app.plist
-```
-
-#### Windows
-
-1. Press `Win+R` and type: `shell:startup`
-2. Create a shortcut with target: `cmd.exe /c securevault`
-
-Or use Task Scheduler for more control.
-
 ## Usage
 
 Once running, SecureVault provides:
@@ -187,8 +107,6 @@ The backend server exposes the following REST API:
 - `npm run test:server` - Run backend unit tests
 - `npm run test:e2e` - Run E2E tests with real keychain
 - `npm run lint` - Run ESLint
-- `npm run install-service` - Install as system service
-- `npm run uninstall-service` - Remove system service
 
 ### Testing
 
@@ -240,10 +158,6 @@ This project includes GitHub Actions workflows for:
 To remove SecureVault:
 
 ```bash
-# Stop and remove system service (if installed)
-npm run uninstall-service
-
-# Uninstall the package
 npm uninstall -g securevault
 ```
 
@@ -261,13 +175,6 @@ Make sure you have the required system libraries:
 - Ensure the backend server is running on port 3001
 - Check that no firewall is blocking the connection
 - Verify CORS is enabled in the backend (it should be by default)
-
-### Permission Issues on Linux
-
-If you get permission errors when installing as a service:
-```bash
-sudo npm run install-service
-```
 
 ### Port Already in Use
 

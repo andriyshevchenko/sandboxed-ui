@@ -31,9 +31,7 @@
         "test:server": "NODE_OPTIONS='--experimental-vm-modules' jest --testPathIgnorePatterns=e2e --config server/jest.config.js",
         "test:e2e": "NODE_OPTIONS='--experimental-vm-modules' jest e2e --config server/jest.config.js",
         "optimize": "vite optimize",
-        "preview": "vite preview",
-        "install-service": "node scripts/install-service.js",
-        "uninstall-service": "node scripts/uninstall-service.js"
+        "preview": "vite preview"
     },
     "dependencies": {
         "@github/spark": ">=0.43.1 <1",
@@ -135,7 +133,6 @@
         "dist",
         "server",
         "bin",
-        "scripts",
         "README.md",
         "LICENSE"
     ],
