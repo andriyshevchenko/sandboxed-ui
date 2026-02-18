@@ -1,8 +1,9 @@
 {
   "name": "securevault-server",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
-  "description": "Backend server for SecureVault secret manager",
+  "description": "Legacy manifest retained only to satisfy tooling. All scripts and dependencies are managed from the repository root package.json.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

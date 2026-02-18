@@ -110,8 +110,11 @@ function App() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+        <div className="text-center" role="status" aria-live="polite" aria-busy="true">
+          <div 
+            className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent"
+            aria-hidden="true"
+          ></div>
           <p className="mt-4 text-muted-foreground">Loading secrets...</p>
         </div>
       </div>
@@ -122,7 +125,13 @@ function App() {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center max-w-md">
-          <div className="text-red-500 text-4xl mb-4">⚠️</div>
+          <div 
+            className="text-red-500 text-4xl mb-4"
+            role="img"
+            aria-label="Warning: Connection error"
+          >
+            ⚠️
+          </div>
           <h2 className="text-xl font-bold mb-2">Connection Error</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
           <p className="text-sm text-muted-foreground">

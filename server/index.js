@@ -11,7 +11,9 @@ const allowedOrigins = [
   'http://localhost:5000',
   'http://127.0.0.1:5000',
   'http://localhost:3000',
-  'http://127.0.0.1:3000'
+  'http://127.0.0.1:3000',
+  'http://localhost:5173', // Vite dev server default
+  'http://127.0.0.1:5173'
 ];
 
 const corsOptions = {
@@ -79,21 +81,24 @@ const storage = {
 
 // Helper function to get all secrets with their values from keychain
 async function getAllSecrets() {
-  const secrets = [];
-  for (const meta of secretsMetadata) {
+  const secretPromises = secretsMetadata.map(async (meta) => {
     try {
       const value = await storage.getPassword(SERVICE_NAME, meta.id);
-      if (value) {
-        secrets.push({
-          ...meta,
-          value: value
-        });
+      if (!value) {
+        return null;
       }
+      return {
+        ...meta,
+        value: value
+      };
     } catch (error) {
       console.error(`Error getting secret ${meta.id}:`, error);
+      return null;
     }
-  }
-  return secrets;
+  });
+
+  const secretsWithNulls = await Promise.all(secretPromises);
+  return secretsWithNulls.filter(Boolean);
 }
 
 // GET /api/secrets - Get all secrets
@@ -147,6 +152,20 @@ app.put('/api/secrets/:id', async (req, res) => {
       return res.status(404).json({ error: 'Secret not found' });
     }
     
+    // Validate provided fields
+    if (title !== undefined && (typeof title !== 'string' || title.trim() === '')) {
+      return res.status(400).json({ error: 'Title must be a non-empty string' });
+    }
+    
+    const validCategories = ['password', 'api-key', 'token', 'certificate', 'note', 'other'];
+    if (category !== undefined && !validCategories.includes(category)) {
+      return res.status(400).json({ error: 'Invalid category. Must be one of: ' + validCategories.join(', ') });
+    }
+    
+    if (notes !== undefined && typeof notes !== 'string') {
+      return res.status(400).json({ error: 'Notes must be a string' });
+    }
+    
     const existingMeta = secretsMetadata[metaIndex];
     
     // Get current secret value
@@ -157,6 +176,9 @@ app.put('/api/secrets/:id', async (req, res) => {
       if (value === null || value === '') {
         return res.status(400).json({ error: 'Secret value cannot be empty' });
       }
+      if (typeof value !== 'string') {
+        return res.status(400).json({ error: 'Secret value must be a string' });
+      }
       await storage.setPassword(SERVICE_NAME, id, value);
       secretValue = value;
     }
@@ -164,7 +186,7 @@ app.put('/api/secrets/:id', async (req, res) => {
     // Update metadata, preserving existing fields when omitted
     secretsMetadata[metaIndex] = {
       ...existingMeta,
-      title: title !== undefined ? title : existingMeta.title,
+      title: title !== undefined ? title.trim() : existingMeta.title,
       category: category !== undefined ? category : existingMeta.category,
       notes: notes !== undefined ? notes : existingMeta.notes,
       updatedAt: updatedAt !== undefined ? updatedAt : existingMeta.updatedAt
