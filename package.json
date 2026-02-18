@@ -15,6 +15,7 @@
         "dev": "vite",
         "server": "cd server && npm start",
         "server:dev": "cd server && npm run dev",
+        "start": "./start.sh",
         "kill": "fuser -k 5000/tcp",
         "build": "tsc -b --noCheck && vite build",
         "build:server": "cd server && npm run build",
@@ -116,5 +117,17 @@
         "packages": [
             "packages/*"
         ]
+    },
+    "files": [
+        "dist",
+        "server",
+        "README.md",
+        "LICENSE",
+        "Dockerfile",
+        "docker-compose.yml",
+        ".dockerignore"
+    ],
+    "publishConfig": {
+        "access": "public"
     }
 }
