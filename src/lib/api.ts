@@ -7,28 +7,14 @@ export class ApiClient {
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
-    const headers: HeadersInit = {
-      ...options?.headers,
-    }
+    // Normalize headers to a Headers instance to correctly handle all supported shapes
+    const headers = new Headers(options?.headers)
 
     // Only set Content-Type when a body is present to avoid unnecessary CORS preflights
-    const originalHeaders = options?.headers
-    let hasContentType = false
-
-    if (originalHeaders instanceof Headers) {
-      hasContentType = originalHeaders.has('content-type')
-    } else if (Array.isArray(originalHeaders)) {
-      hasContentType = originalHeaders.some(
-        ([key]) => key.toLowerCase() === 'content-type'
-      )
-    } else if (originalHeaders && typeof originalHeaders === 'object') {
-      hasContentType = Object.keys(originalHeaders).some(
-        key => key.toLowerCase() === 'content-type'
-      )
-    }
+    const hasContentType = headers.has('content-type')
 
     if (options?.body && !hasContentType) {
-      (headers as Record<string, string>)['Content-Type'] = 'application/json'
+      headers.set('Content-Type', 'application/json')
     }
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {

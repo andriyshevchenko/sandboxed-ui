@@ -133,9 +133,8 @@ describe('SecureVault API', () => {
         }
         
         // Validate category if provided
-        const validCategories = ['password', 'api-key', 'token', 'certificate', 'note', 'other'];
-        if (category !== undefined && !validCategories.includes(category)) {
-          return res.status(400).json({ error: 'Invalid category. Must be one of: ' + validCategories.join(', ') });
+        if (category !== undefined && !VALID_CATEGORIES.includes(category)) {
+          return res.status(400).json({ error: 'Invalid category. Must be one of: ' + VALID_CATEGORIES.join(', ') });
         }
         
         // Validate notes if provided
