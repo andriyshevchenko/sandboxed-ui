@@ -18,8 +18,8 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Only allow specific localhost origins for security
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -30,7 +30,7 @@ const corsOptions = {
 
 // Middleware
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' })); // Set limit for large certificates and keys
 
 // Check if keychain is available
 let keychainAvailable = false;
@@ -49,6 +49,9 @@ try {
 
 // In-memory cache for secret metadata (keychain only stores key-value pairs)
 // We'll store the full secret objects here, but the values will be in the keychain
+// NOTE: Metadata is stored in memory and will be lost on server restart.
+// Secret values persist in the OS keychain but become inaccessible through the app until recreated.
+// For production use, consider persisting metadata to disk or storing it alongside values in keychain.
 let secretsMetadata = [];
 
 // Storage abstraction layer

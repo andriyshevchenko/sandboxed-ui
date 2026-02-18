@@ -184,6 +184,14 @@ If ports 3001 or 5000 are already in use, you'll need to:
 1. Stop the conflicting service
 2. Or modify the ports in `server/index.js` and `bin/securevault.js`
 
+### Lost Secrets After Restart
+
+**Note**: Secret metadata (title, category, notes, timestamps) is currently stored in memory. When the server restarts:
+- Secret **values** remain safe in the OS keychain
+- Secret **metadata** is lost and secrets become inaccessible through the app
+
+**Workaround**: Secrets need to be recreated after server restart. For production use, we recommend implementing persistent metadata storage.
+
 ## Contributing
 
 1. Fork the repository
