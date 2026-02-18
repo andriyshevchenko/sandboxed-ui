@@ -66,6 +66,12 @@ describe('SecureVault API', () => {
           return res.status(400).json({ error: 'Missing required fields' });
         }
 
+        // Check for duplicate ID
+        const existingSecret = secretsMetadata.find(s => s.id === id);
+        if (existingSecret) {
+          return res.status(409).json({ error: 'Secret with this ID already exists' });
+        }
+
         await storage.setPassword('SecureVault', id, value);
         const metadata = { id, title, category, notes, createdAt, updatedAt };
         secretsMetadata.push(metadata);
@@ -87,16 +93,30 @@ describe('SecureVault API', () => {
           return res.status(404).json({ error: 'Secret not found' });
         }
         
-        await storage.setPassword('SecureVault', id, value);
+        const existingMeta = secretsMetadata[metaIndex];
+        
+        // Get current secret value
+        let secretValue = await storage.getPassword('SecureVault', id);
+        
+        // Update the secret value in keychain only if a new value is provided
+        if (value !== undefined) {
+          if (value === null || value === '') {
+            return res.status(400).json({ error: 'Secret value cannot be empty' });
+          }
+          await storage.setPassword('SecureVault', id, value);
+          secretValue = value;
+        }
+        
+        // Update metadata, preserving existing fields when omitted
         secretsMetadata[metaIndex] = {
-          ...secretsMetadata[metaIndex],
-          title,
-          category,
-          notes,
-          updatedAt
+          ...existingMeta,
+          title: title !== undefined ? title : existingMeta.title,
+          category: category !== undefined ? category : existingMeta.category,
+          notes: notes !== undefined ? notes : existingMeta.notes,
+          updatedAt: updatedAt !== undefined ? updatedAt : existingMeta.updatedAt
         };
         
-        res.json({ ...secretsMetadata[metaIndex], value });
+        res.json({ ...secretsMetadata[metaIndex], value: secretValue });
       } catch (error) {
         res.status(500).json({ error: 'Failed to update secret' });
       }
@@ -175,6 +195,36 @@ describe('SecureVault API', () => {
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('error');
     });
+
+    it('should return 409 if secret with same ID already exists', async () => {
+      const secret = {
+        id: 'duplicate-test-id',
+        title: 'First Secret',
+        value: 'secret-value-1',
+        category: 'password',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      // Create first secret
+      await request(app)
+        .post('/api/secrets')
+        .send(secret);
+
+      // Try to create duplicate
+      const duplicateSecret = {
+        ...secret,
+        title: 'Duplicate Secret',
+        value: 'secret-value-2'
+      };
+
+      const response = await request(app)
+        .post('/api/secrets')
+        .send(duplicateSecret);
+
+      expect(response.status).toBe(409);
+      expect(response.body.error).toBe('Secret with this ID already exists');
+    });
   });
 
   describe('GET /api/secrets', () => {
@@ -222,6 +272,54 @@ describe('SecureVault API', () => {
         .send({ title: 'Test', value: 'test', category: 'password', updatedAt: Date.now() });
 
       expect(response.status).toBe(404);
+    });
+
+    it('should return 400 if secret value is empty', async () => {
+      // First create a secret
+      const newSecret = {
+        id: 'test-id-empty-value',
+        title: 'Test Secret',
+        value: 'original-value',
+        category: 'password',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      await request(app).post('/api/secrets').send(newSecret);
+
+      // Try to update with empty value
+      const response = await request(app)
+        .put(`/api/secrets/${newSecret.id}`)
+        .send({ value: '' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Secret value cannot be empty');
+    });
+
+    it('should preserve existing fields when omitted', async () => {
+      // First create a secret
+      const newSecret = {
+        id: 'test-id-preserve',
+        title: 'Original Title',
+        value: 'original-value',
+        category: 'password',
+        notes: 'Original notes',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      await request(app).post('/api/secrets').send(newSecret);
+
+      // Update only the title (omit value, category, notes)
+      const response = await request(app)
+        .put(`/api/secrets/${newSecret.id}`)
+        .send({ title: 'Updated Title' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.title).toBe('Updated Title');
+      expect(response.body.category).toBe(newSecret.category);
+      expect(response.body.notes).toBe(newSecret.notes);
+      expect(response.body.value).toBe(newSecret.value); // Value should be preserved
     });
   });
 

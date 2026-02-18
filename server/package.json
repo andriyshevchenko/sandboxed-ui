@@ -7,9 +7,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
-    "test": "NODE_OPTIONS='--experimental-vm-modules' jest --testPathIgnorePatterns=e2e",
-    "test:e2e": "NODE_OPTIONS='--experimental-vm-modules' jest e2e",
-    "test:all": "NODE_OPTIONS='--experimental-vm-modules' jest"
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --testPathIgnorePatterns=e2e",
+    "test:e2e": "cross-env NODE_OPTIONS=--experimental-vm-modules jest e2e",
+    "test:all": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "dependencies": {
     "express": "^5.2.0",
