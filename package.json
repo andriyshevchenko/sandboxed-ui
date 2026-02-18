@@ -4,7 +4,13 @@
     "version": "1.0.0",
     "type": "module",
     "description": "Secure secret manager with OS keychain integration - runs locally on your machine",
-    "keywords": ["secrets", "keychain", "password-manager", "security", "vault"],
+    "keywords": [
+        "secrets",
+        "keychain",
+        "password-manager",
+        "security",
+        "vault"
+    ],
     "author": "andriyshevchenko",
     "license": "MIT",
     "repository": {
@@ -28,8 +34,8 @@
         "lint": "eslint .",
         "test": "vitest run",
         "test:watch": "vitest",
-        "test:server": "NODE_OPTIONS='--experimental-vm-modules' jest --testPathIgnorePatterns=e2e --config server/jest.config.js",
-        "test:e2e": "NODE_OPTIONS='--experimental-vm-modules' jest e2e --config server/jest.config.js",
+        "test:server": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --testPathIgnorePatterns=e2e --config server/jest.config.js",
+        "test:e2e": "cross-env NODE_OPTIONS=--experimental-vm-modules jest e2e --config server/jest.config.js",
         "optimize": "vite optimize",
         "preview": "vite preview"
     },
@@ -104,8 +110,8 @@
     "devDependencies": {
         "@eslint/js": "^9.21.0",
         "@tailwindcss/postcss": "^4.1.8",
-        "@testing-library/react": "^16.0.1",
         "@testing-library/jest-dom": "^6.6.3",
+        "@testing-library/react": "^16.0.1",
         "@testing-library/user-event": "^14.5.2",
         "@types/cors": "^2.8.17",
         "@types/express": "^5.0.1",
@@ -116,6 +122,7 @@
         "@types/supertest": "^6.0.2",
         "@vitejs/plugin-react-swc": "^4.2.2",
         "@vitest/ui": "^3.0.9",
+        "cross-env": "^10.1.0",
         "eslint": "^9.28.0",
         "eslint-plugin-react-hooks": "^5.2.0",
         "eslint-plugin-react-refresh": "^0.4.19",

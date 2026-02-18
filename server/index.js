@@ -6,8 +6,28 @@ const app = express();
 const PORT = 3001;
 const SERVICE_NAME = 'SecureVault';
 
+// CORS configuration - restrict to localhost origins for security
+const allowedOrigins = [
+  'http://localhost:5000',
+  'http://127.0.0.1:5000',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Check if keychain is available
@@ -95,6 +115,12 @@ app.post('/api/secrets', async (req, res) => {
     if (!id || !title || !value || !category) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
+    
+    // Check for duplicate ID
+    const existingSecret = secretsMetadata.find(s => s.id === id);
+    if (existingSecret) {
+      return res.status(409).json({ error: 'Secret with this ID already exists' });
+    }
 
     // Store the secret value in keychain
     await storage.setPassword(SERVICE_NAME, id, value);
@@ -121,19 +147,30 @@ app.put('/api/secrets/:id', async (req, res) => {
       return res.status(404).json({ error: 'Secret not found' });
     }
     
-    // Update the secret value in keychain
-    await storage.setPassword(SERVICE_NAME, id, value);
+    const existingMeta = secretsMetadata[metaIndex];
     
-    // Update metadata
+    // Get current secret value
+    let secretValue = await storage.getPassword(SERVICE_NAME, id);
+    
+    // Update the secret value in keychain only if a new value is provided
+    if (value !== undefined) {
+      if (value === null || value === '') {
+        return res.status(400).json({ error: 'Secret value cannot be empty' });
+      }
+      await storage.setPassword(SERVICE_NAME, id, value);
+      secretValue = value;
+    }
+    
+    // Update metadata, preserving existing fields when omitted
     secretsMetadata[metaIndex] = {
-      ...secretsMetadata[metaIndex],
-      title,
-      category,
-      notes,
-      updatedAt
+      ...existingMeta,
+      title: title !== undefined ? title : existingMeta.title,
+      category: category !== undefined ? category : existingMeta.category,
+      notes: notes !== undefined ? notes : existingMeta.notes,
+      updatedAt: updatedAt !== undefined ? updatedAt : existingMeta.updatedAt
     };
     
-    res.json({ ...secretsMetadata[metaIndex], value });
+    res.json({ ...secretsMetadata[metaIndex], value: secretValue });
   } catch (error) {
     console.error('Error updating secret:', error);
     res.status(500).json({ error: 'Failed to update secret' });
@@ -168,7 +205,8 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'SecureVault Backend' });
 });
 
-app.listen(PORT, () => {
+// Start server - bind to localhost only for security
+app.listen(PORT, '127.0.0.1', () => {
   console.log(`🔒 SecureVault backend server running on http://localhost:${PORT}`);
   if (keychainAvailable) {
     console.log(`📦 Secrets will be stored securely in your OS keychain`);

@@ -126,7 +126,7 @@ function App() {
           <h2 className="text-xl font-bold mb-2">Connection Error</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
           <p className="text-sm text-muted-foreground">
-            Please start the backend server: <code className="bg-card px-2 py-1 rounded">cd server && npm start</code>
+            Please start the backend server from the project root: <code className="bg-card px-2 py-1 rounded">npm run server</code> or, if installed globally, run <code className="bg-card px-2 py-1 rounded">securevault</code>.
           </p>
           <Button 
             onClick={() => window.location.reload()} 

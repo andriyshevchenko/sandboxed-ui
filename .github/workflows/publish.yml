@@ -60,8 +60,19 @@ jobs:
     - name: Install dependencies
       run: npm ci
       
-    - name: Run tests
+    - name: Install system dependencies (Linux)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libsecret-1-dev
+      
+    - name: Rebuild keytar
+      run: npm rebuild keytar
+      
+    - name: Run frontend tests
       run: npm test
+      
+    - name: Run backend tests
+      run: npm run test:server
       
     - name: Build
       run: npm run build
