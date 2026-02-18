@@ -6,6 +6,9 @@ const app = express();
 const PORT = 3001;
 const SERVICE_NAME = 'SecureVault';
 
+// Valid secret categories - shared constant to avoid duplication
+const VALID_CATEGORIES = ['password', 'api-key', 'token', 'certificate', 'note', 'other'];
+
 // CORS configuration - restrict to localhost origins for security
 const allowedOrigins = [
   'http://localhost:5000',
@@ -18,12 +21,17 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Only allow specific localhost origins for security
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(null, false);
+    // Only allow specific localhost origins for security.
+    // Requests without an Origin header (e.g., curl or server-to-server) are intentionally rejected.
+    if (!origin) {
+      return callback(null, false);
     }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(null, false);
   },
   credentials: true,
 };
@@ -130,14 +138,18 @@ app.post('/api/secrets', async (req, res) => {
     }
     
     // Validate category
-    const validCategories = ['password', 'api-key', 'token', 'certificate', 'note', 'other'];
-    if (!validCategories.includes(category)) {
-      return res.status(400).json({ error: 'Invalid category. Must be one of: ' + validCategories.join(', ') });
+    if (!VALID_CATEGORIES.includes(category)) {
+      return res.status(400).json({ error: 'Invalid category. Must be one of: ' + VALID_CATEGORIES.join(', ') });
     }
     
     // Validate value
     if (typeof value !== 'string' || value === '') {
       return res.status(400).json({ error: 'Secret value must be a non-empty string' });
+    }
+
+    // Validate notes (optional, but must be a string if provided)
+    if (notes !== undefined && typeof notes !== 'string') {
+      return res.status(400).json({ error: 'Notes must be a string' });
     }
     
     // Check for duplicate ID
@@ -176,9 +188,8 @@ app.put('/api/secrets/:id', async (req, res) => {
       return res.status(400).json({ error: 'Title must be a non-empty string' });
     }
     
-    const validCategories = ['password', 'api-key', 'token', 'certificate', 'note', 'other'];
-    if (category !== undefined && !validCategories.includes(category)) {
-      return res.status(400).json({ error: 'Invalid category. Must be one of: ' + validCategories.join(', ') });
+    if (category !== undefined && !VALID_CATEGORIES.includes(category)) {
+      return res.status(400).json({ error: 'Invalid category. Must be one of: ' + VALID_CATEGORIES.join(', ') });
     }
     
     if (notes !== undefined && typeof notes !== 'string') {

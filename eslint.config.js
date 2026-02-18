@@ -27,4 +27,18 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
+  {
+    // Lint server JavaScript files
+    files: ['server/**/*.js'],
+    ignores: ['server/__tests__/**'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2022, // Support top-level await
+      globals: globals.node,
+      sourceType: 'module',
+    },
+    rules: {
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    },
+  },
 );

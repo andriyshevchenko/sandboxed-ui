@@ -1,7 +1,10 @@
 import { jest } from '@jest/globals';
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
 import cors from 'cors';
+
+// Valid secret categories - shared constant to match server
+const VALID_CATEGORIES = ['password', 'api-key', 'token', 'certificate', 'note', 'other'];
 
 // Mock keytar
 const mockKeytar = {
@@ -83,14 +86,18 @@ describe('SecureVault API', () => {
         }
         
         // Validate category
-        const validCategories = ['password', 'api-key', 'token', 'certificate', 'note', 'other'];
-        if (!validCategories.includes(category)) {
-          return res.status(400).json({ error: 'Invalid category. Must be one of: ' + validCategories.join(', ') });
+        if (!VALID_CATEGORIES.includes(category)) {
+          return res.status(400).json({ error: 'Invalid category. Must be one of: ' + VALID_CATEGORIES.join(', ') });
         }
         
         // Validate value
         if (typeof value !== 'string' || value === '') {
           return res.status(400).json({ error: 'Secret value must be a non-empty string' });
+        }
+
+        // Validate notes (optional, but must be a string if provided)
+        if (notes !== undefined && typeof notes !== 'string') {
+          return res.status(400).json({ error: 'Notes must be a string' });
         }
 
         // Check for duplicate ID

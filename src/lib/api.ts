@@ -12,9 +12,21 @@ export class ApiClient {
     }
 
     // Only set Content-Type when a body is present to avoid unnecessary CORS preflights
-    const hasContentType = options?.headers && Object.keys(options.headers).some(
-      key => key.toLowerCase() === 'content-type'
-    )
+    const originalHeaders = options?.headers
+    let hasContentType = false
+
+    if (originalHeaders instanceof Headers) {
+      hasContentType = originalHeaders.has('content-type')
+    } else if (Array.isArray(originalHeaders)) {
+      hasContentType = originalHeaders.some(
+        ([key]) => key.toLowerCase() === 'content-type'
+      )
+    } else if (originalHeaders && typeof originalHeaders === 'object') {
+      hasContentType = Object.keys(originalHeaders).some(
+        key => key.toLowerCase() === 'content-type'
+      )
+    }
+
     if (options?.body && !hasContentType) {
       (headers as Record<string, string>)['Content-Type'] = 'application/json'
     }

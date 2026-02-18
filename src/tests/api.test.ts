@@ -33,7 +33,9 @@ describe('ApiClient', () => {
       expect(global.fetch).toHaveBeenCalledWith(
         'http://localhost:3001/api/secrets',
         expect.objectContaining({
-          headers: expect.any(Object),
+          headers: expect.not.objectContaining({
+            'Content-Type': expect.anything(),
+          }),
         })
       )
       expect(result).toEqual(mockSecrets)
