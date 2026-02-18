@@ -4,7 +4,7 @@
 [![npm version](https://badge.fury.io/js/securevault.svg)](https://www.npmjs.com/package/securevault)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A secure, local secret manager application that uses your operating system's native keychain to store sensitive information like passwords, API keys, and credentials.
+A secure, local secret manager application that uses your operating system's native keychain to store sensitive information like passwords, API keys, and credentials. Install globally via NPM and optionally run on system boot.
 
 ## Features
 
@@ -14,99 +14,181 @@ A secure, local secret manager application that uses your operating system's nat
 - 📁 **Categories**: Organize secrets into Password, API Key, Note, Credential, or Other
 - ✂️ **Copy to Clipboard**: One-click copy for quick access
 - 🔐 **Privacy First**: No cloud storage, all data stays on your machine
-- 🐳 **Docker Support**: Run as an isolated container with persistent storage
+- 📦 **Single Package**: Install globally via NPM - no Docker required
+- 🚀 **Auto-Start**: Optionally run on system boot
 - ✅ **Fully Tested**: Comprehensive unit and E2E tests
-
-## Architecture
-
-This application consists of two parts:
-1. **Frontend**: React-based UI built with Vite
-2. **Backend**: Node.js Express server that interfaces with OS keychain via `keytar`
 
 ## Quick Start
 
-### Using Docker (Recommended for Production)
+### Global Installation (Recommended)
 
-The easiest way to run SecureVault is using Docker:
+Install SecureVault globally using npm:
 
 ```bash
-# Using docker-compose
-docker-compose up -d
-
-# Or using Docker directly
-docker build -t securevault:latest .
-docker run -d -p 3001:3001 -p 5000:5000 -v securevault-data:/data securevault:latest
+npm install -g securevault
 ```
 
-Access the application at:
-- Frontend: http://localhost:5000
-- Backend API: http://localhost:3001
+Then simply run:
+
+```bash
+securevault
+```
+
+The application will start automatically and open in your default browser at `http://localhost:5000`.
 
 ### Local Development
 
-#### Prerequisites
+If you want to contribute or run from source:
 
-- Node.js 20+ installed
-- npm or yarn package manager
-- System dependencies:
-  - **macOS**: No additional setup needed
-  - **Linux**: `sudo apt-get install libsecret-1-dev` (Debian/Ubuntu)
-  - **Windows**: No additional setup needed
-
-#### Installation
-
-1. Clone the repository:
 ```bash
+# Clone the repository
 git clone https://github.com/andriyshevchenko/sandboxed-ui.git
 cd sandboxed-ui
-```
 
-2. Install dependencies:
-```bash
-# Frontend
+# Install dependencies
 npm install
 
-# Backend
-cd server
-npm install
-cd ..
+# Build the frontend
+npm run build
+
+# Start the application
+npm start
 ```
 
-#### Running the Application
+## System Requirements
 
-You need to run both the backend server and the frontend:
+- **Node.js**: 20.0.0 or higher
+- **npm**: 10.0.0 or higher
+- **System dependencies**:
+  - **macOS**: No additional setup needed
+  - **Linux**: `sudo apt-get install libsecret-1-dev` (Debian/Ubuntu) or equivalent
+  - **Windows**: No additional setup needed
 
-**Terminal 1 - Backend:**
+## Running on System Boot
+
+SecureVault can be configured to start automatically when your computer boots.
+
+### Automatic Installation
+
+After global installation, run:
+
 ```bash
-npm run server
-```
-The backend will run on `http://localhost:3001`
+# Install as system service
+npm run install-service
 
-**Terminal 2 - Frontend:**
-```bash
-npm run dev
+# On Linux, you may need sudo:
+sudo npm run install-service -g
 ```
-The frontend will run on `http://localhost:5000`
+
+### Manual Setup
+
+#### Linux (systemd)
+
+```bash
+# Create service file
+sudo nano /etc/systemd/system/securevault.service
+
+# Add the following content:
+[Unit]
+Description=SecureVault - Secure Secret Manager
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+ExecStart=/usr/bin/securevault
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
+# Enable and start
+sudo systemctl enable securevault
+sudo systemctl start securevault
+```
+
+#### macOS (launchd)
+
+```bash
+# Create plist file
+nano ~/Library/LaunchAgents/com.securevault.app.plist
+
+# Add the following content:
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.securevault.app</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/securevault</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+</dict>
+</plist>
+
+# Load the agent
+launchctl load ~/Library/LaunchAgents/com.securevault.app.plist
+```
+
+#### Windows
+
+1. Press `Win+R` and type: `shell:startup`
+2. Create a shortcut with target: `cmd.exe /c securevault`
+
+Or use Task Scheduler for more control.
+
+## Usage
+
+Once running, SecureVault provides:
+
+- **Frontend UI**: http://localhost:5000
+- **Backend API**: http://localhost:3001
+
+### Adding Secrets
+
+1. Click the "Add Secret" button
+2. Fill in the title, value, category, and optional notes
+3. Click "Add Secret" to save
+
+### Managing Secrets
+
+- **View**: Click the eye icon to reveal/hide secret values
+- **Copy**: Click the copy icon to copy to clipboard
+- **Edit**: Click the edit icon to modify
+- **Delete**: Click the trash icon to remove
+- **Search**: Type in the search bar to filter secrets
+- **Filter**: Click category buttons to filter by type
+
+## API Endpoints
+
+The backend server exposes the following REST API:
+
+- `GET /api/secrets` - Get all secrets
+- `POST /api/secrets` - Create a new secret
+- `PUT /api/secrets/:id` - Update a secret
+- `DELETE /api/secrets/:id` - Delete a secret
+- `GET /api/health` - Health check
 
 ## Development
 
 ### Scripts
 
-#### Frontend
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm test` - Run unit tests
-- `npm run lint` - Run ESLint
-
-#### Backend
-- `npm run server` - Start backend server
-- `npm run server:dev` - Start backend with auto-reload
+- `npm start` - Start the application
+- `npm run dev` - Start development server (frontend only)
+- `npm run server` - Start backend server only
+- `npm run build` - Build frontend for production
+- `npm test` - Run frontend tests
 - `npm run test:server` - Run backend unit tests
 - `npm run test:e2e` - Run E2E tests with real keychain
-
-#### Docker
-- `npm run docker:build` - Build Docker image
-- `npm run docker:run` - Run Docker container
+- `npm run lint` - Run ESLint
+- `npm run install-service` - Install as system service
+- `npm run uninstall-service` - Remove system service
 
 ### Testing
 
@@ -119,81 +201,17 @@ Runs unit tests for the frontend components and API client using Vitest.
 
 #### Backend Unit Tests
 ```bash
-cd server
-npm test
+npm run test:server
 ```
 
 Tests API endpoints with mocked keychain access.
 
 #### Backend E2E Tests
 ```bash
-cd server
 npm run test:e2e
 ```
 
 Tests real keychain integration (requires OS keychain access).
-
-## API Endpoints
-
-The backend server exposes the following REST API:
-
-- `GET /api/secrets` - Get all secrets
-- `POST /api/secrets` - Create a new secret
-- `PUT /api/secrets/:id` - Update a secret
-- `DELETE /api/secrets/:id` - Delete a secret
-- `GET /api/health` - Health check
-
-### Example API Usage
-
-```javascript
-// Create a secret
-const response = await fetch('http://localhost:3001/api/secrets', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    id: crypto.randomUUID(),
-    title: 'My Secret',
-    value: 'secret-value',
-    category: 'password',
-    notes: 'Optional notes',
-    createdAt: Date.now(),
-    updatedAt: Date.now()
-  })
-});
-```
-
-## Docker Deployment
-
-### Building the Image
-
-```bash
-docker build -t securevault:latest .
-```
-
-### Running with Docker Compose
-
-The included `docker-compose.yml` provides:
-- Persistent volume for data
-- Automatic restart
-- Health checks
-- Port mapping
-
-```bash
-docker-compose up -d
-```
-
-### Environment Variables
-
-- `NODE_ENV` - Set to `production` for production deployment
-- `DATA_DIR` - Directory for persistent data (default: `/data`)
-
-### Volumes
-
-The application uses a persistent volume to store secret metadata:
-- Volume name: `securevault-data`
-- Mount point: `/data` in the container
-
-**Note:** While metadata is stored in the volume, secret values are stored in the OS keychain when available. In containerized environments, the application uses in-memory fallback storage.
 
 ## CI/CD
 
@@ -206,8 +224,8 @@ This project includes GitHub Actions workflows for:
 - Backend E2E tests with real keychain (macOS only)
 
 ### NPM Publishing (.github/workflows/publish.yml)
-- Automatic publishing to NPM on push to main branch
-- Requires `NPM_ACCESS_TOKEN` secret to be set in repository settings
+- Automatic publishing to NPM on version changes in package.json
+- Requires `NPM_ACCESS_TOKEN` secret in repository settings
 
 ## Security
 
@@ -215,20 +233,18 @@ This project includes GitHub Actions workflows for:
 - The backend server runs locally and only accepts connections from localhost
 - No data is sent to any external servers
 - Secret metadata (title, category, notes) is stored in memory on the backend
-- In Docker, uses fallback in-memory storage when OS keychain is unavailable
+- Fallback to in-memory storage when OS keychain is unavailable
 
-## Publishing to NPM
+## Uninstalling
 
-The package is configured for NPM publishing. On push to the main branch, GitHub Actions will:
-1. Run all tests
-2. Build the application
-3. Publish to NPM (requires `NPM_ACCESS_TOKEN` secret)
-
-### Manual Publishing
+To remove SecureVault:
 
 ```bash
-npm login
-npm publish --access public
+# Stop and remove system service (if installed)
+npm run uninstall-service
+
+# Uninstall the package
+npm uninstall -g securevault
 ```
 
 ## Troubleshooting
@@ -243,16 +259,21 @@ Make sure you have the required system libraries:
 ### Frontend can't connect to backend
 
 - Ensure the backend server is running on port 3001
-- Check that CORS is enabled in the backend (it should be by default)
-- Verify no firewall is blocking the connection
+- Check that no firewall is blocking the connection
+- Verify CORS is enabled in the backend (it should be by default)
 
-### Docker keychain access
+### Permission Issues on Linux
 
-In Docker containers on Linux, the OS keychain may not be available. The application will automatically fall back to in-memory storage with a warning message.
+If you get permission errors when installing as a service:
+```bash
+sudo npm run install-service -g
+```
 
-### E2E tests failing
+### Port Already in Use
 
-E2E tests require access to the OS keychain. On CI, they only run on macOS where keychain access is available. On Linux CI runners, keychain access is typically not available.
+If ports 3001 or 5000 are already in use, you'll need to:
+1. Stop the conflicting service
+2. Or modify the ports in `server/index.js` and `bin/securevault.js`
 
 ## Contributing
 

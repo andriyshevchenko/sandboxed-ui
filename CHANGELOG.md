@@ -17,8 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive unit tests for frontend
 - Backend unit and E2E tests with real keychain integration
 - GitHub Actions CI/CD workflows
-- Docker support with docker-compose
-- NPM publishing workflow
+- NPM global package installation
+- CLI command: `securevault`
+- Auto-start on system boot support (Linux, macOS, Windows)
+- Installation scripts for system services
 - Full documentation
 
 ### Features
@@ -27,12 +29,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - REST API for secret management
 - Beautiful dark-themed UI with animations
 - Cross-platform support
+- Single command installation and execution
+- Optional system service for running on boot
 
 ### Security
 - No cloud storage - all data stays local
 - Secrets encrypted using OS keychain
 - CORS-enabled API for localhost only
 - No external dependencies for secret storage
+
+### Removed
+- Docker support (replaced with direct NPM installation)
+- Docker-related files and scripts
 
 ## [Unreleased]
 
@@ -42,3 +50,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Password strength indicator
 - Auto-lock after inactivity
 - Browser extension
+- Tray icon support
+- Custom port configuration
