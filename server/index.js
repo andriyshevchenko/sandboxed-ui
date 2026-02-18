@@ -10,16 +10,59 @@ const SERVICE_NAME = 'SecureVault';
 app.use(cors());
 app.use(express.json());
 
+// Check if keychain is available
+let keychainAvailable = false;
+let fallbackStorage = {}; // Fallback in-memory storage when keychain is unavailable
+
+// Test keychain availability
+try {
+  await keytar.setPassword(SERVICE_NAME, '__test__', 'test');
+  await keytar.deletePassword(SERVICE_NAME, '__test__');
+  keychainAvailable = true;
+  console.log('✅ OS keychain is available and will be used for secure storage');
+} catch (error) {
+  console.warn('⚠️  OS keychain is not available. Using in-memory storage as fallback.');
+  console.warn('   Note: Secrets will be lost when the server restarts.');
+}
+
 // In-memory cache for secret metadata (keychain only stores key-value pairs)
 // We'll store the full secret objects here, but the values will be in the keychain
 let secretsMetadata = [];
+
+// Storage abstraction layer
+const storage = {
+  async setPassword(service, account, password) {
+    if (keychainAvailable) {
+      return await keytar.setPassword(service, account, password);
+    } else {
+      fallbackStorage[account] = password;
+    }
+  },
+  
+  async getPassword(service, account) {
+    if (keychainAvailable) {
+      return await keytar.getPassword(service, account);
+    } else {
+      return fallbackStorage[account] || null;
+    }
+  },
+  
+  async deletePassword(service, account) {
+    if (keychainAvailable) {
+      return await keytar.deletePassword(service, account);
+    } else {
+      delete fallbackStorage[account];
+      return true;
+    }
+  }
+};
 
 // Helper function to get all secrets with their values from keychain
 async function getAllSecrets() {
   const secrets = [];
   for (const meta of secretsMetadata) {
     try {
-      const value = await keytar.getPassword(SERVICE_NAME, meta.id);
+      const value = await storage.getPassword(SERVICE_NAME, meta.id);
       if (value) {
         secrets.push({
           ...meta,
@@ -54,7 +97,7 @@ app.post('/api/secrets', async (req, res) => {
     }
 
     // Store the secret value in keychain
-    await keytar.setPassword(SERVICE_NAME, id, value);
+    await storage.setPassword(SERVICE_NAME, id, value);
     
     // Store metadata
     const metadata = { id, title, category, notes, createdAt, updatedAt };
@@ -79,7 +122,7 @@ app.put('/api/secrets/:id', async (req, res) => {
     }
     
     // Update the secret value in keychain
-    await keytar.setPassword(SERVICE_NAME, id, value);
+    await storage.setPassword(SERVICE_NAME, id, value);
     
     // Update metadata
     secretsMetadata[metaIndex] = {
@@ -108,7 +151,7 @@ app.delete('/api/secrets/:id', async (req, res) => {
     }
     
     // Delete from keychain
-    await keytar.deletePassword(SERVICE_NAME, id);
+    await storage.deletePassword(SERVICE_NAME, id);
     
     // Delete metadata
     secretsMetadata.splice(metaIndex, 1);
@@ -127,5 +170,9 @@ app.get('/api/health', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🔒 SecureVault backend server running on http://localhost:${PORT}`);
-  console.log(`📦 Secrets will be stored securely in your OS keychain`);
+  if (keychainAvailable) {
+    console.log(`📦 Secrets will be stored securely in your OS keychain`);
+  } else {
+    console.log(`⚠️  Using in-memory storage (secrets will be lost on restart)`);
+  }
 });
