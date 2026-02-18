@@ -130,14 +130,14 @@ describe('Metadata Persistence', () => {
     it('should persist metadata across multiple saves', () => {
       // Save initial metadata
       const metadata1 = [
-        { id: '1', title: 'Secret 1', category: 'password', createdAt: Date.now(), updatedAt: Date.now() }
+        { id: '1', title: 'Secret 1', category: 'password', notes: 'Note 1', createdAt: Date.now(), updatedAt: Date.now() }
       ];
       saveMetadata(metadata1);
 
       // Add more metadata
       const metadata2 = [
-        { id: '1', title: 'Secret 1', category: 'password', createdAt: Date.now(), updatedAt: Date.now() },
-        { id: '2', title: 'Secret 2', category: 'api-key', createdAt: Date.now(), updatedAt: Date.now() }
+        { id: '1', title: 'Secret 1', category: 'password', notes: 'Note 1', createdAt: Date.now(), updatedAt: Date.now() },
+        { id: '2', title: 'Secret 2', category: 'api-key', notes: 'Note 2', createdAt: Date.now(), updatedAt: Date.now() }
       ];
       saveMetadata(metadata2);
 
@@ -145,7 +145,9 @@ describe('Metadata Persistence', () => {
       const loadedMetadata = loadMetadata();
       expect(loadedMetadata.length).toBe(2);
       expect(loadedMetadata[0].id).toBe('1');
+      expect(loadedMetadata[0].notes).toBe('Note 1');
       expect(loadedMetadata[1].id).toBe('2');
+      expect(loadedMetadata[1].notes).toBe('Note 2');
     });
   });
 });

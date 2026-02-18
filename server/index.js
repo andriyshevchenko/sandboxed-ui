@@ -49,7 +49,7 @@ const saveMetadata = (metadata) => {
     const metadataPath = getMetadataPath();
     fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), 'utf8');
   } catch (error) {
-    console.error('❌ Failed to save metadata to disk:', error.message);
+    console.error(`❌ Failed to save metadata to ${getMetadataPath()}:`, error.message);
   }
 };
 
