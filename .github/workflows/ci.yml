@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test-frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run linter
+      run: npm run lint
+      
+    - name: Build frontend
+      run: npm run build
+      
+    - name: Run frontend tests
+      run: npm test
+
+  test-backend:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: server/package-lock.json
+        
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libsecret-1-dev
+        
+    - name: Install backend dependencies
+      working-directory: ./server
+      run: npm ci
+      
+    - name: Rebuild keytar (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      working-directory: ./server
+      run: npm rebuild keytar
+      
+    - name: Run backend unit tests
+      working-directory: ./server
+      run: npm test
+      
+    - name: Run backend E2E tests (macOS only)
+      if: matrix.os == 'macos-latest'
+      working-directory: ./server
+      run: npm run test:e2e
