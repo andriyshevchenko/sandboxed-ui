@@ -27,7 +27,7 @@ FROM node:20-alpine AS backend-builder
 WORKDIR /app/server
 
 # Install build dependencies for native modules
-RUN apk add --no-cache python3 make g++ libsecret-dev
+RUN apk add --no-cache python3 make g++ libsecret
 
 # Copy backend package files
 COPY server/package*.json ./
