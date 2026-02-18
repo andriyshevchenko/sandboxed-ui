@@ -28,9 +28,14 @@ jobs:
       id: version-check
       run: |
         CURRENT_VERSION=$(node --input-type=module -p "(await import('./package.json', { with: { type: 'json' } })).default.version")
-        git checkout HEAD~1 -- package.json 2>/dev/null || echo "First commit"
-        PREVIOUS_VERSION=$(node --input-type=module -p "(await import('./package.json', { with: { type: 'json' } })).default.version" 2>/dev/null || echo "0.0.0")
-        git checkout HEAD -- package.json
+        if git rev-parse HEAD~1 >/dev/null 2>&1; then
+          git checkout HEAD~1 -- package.json
+          PREVIOUS_VERSION=$(node --input-type=module -p "(await import('./package.json', { with: { type: 'json' } })).default.version")
+          git checkout HEAD -- package.json
+        else
+          echo "No previous commit found, treating previous version as 0.0.0"
+          PREVIOUS_VERSION="0.0.0"
+        fi
         
         if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
           echo "Version changed from $PREVIOUS_VERSION to $CURRENT_VERSION"

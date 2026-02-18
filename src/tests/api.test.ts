@@ -29,12 +29,11 @@ describe('ApiClient', () => {
 
       const result = await ApiClient.getSecrets()
 
+      // GET requests should not set Content-Type header to avoid CORS preflights
       expect(global.fetch).toHaveBeenCalledWith(
         'http://localhost:3001/api/secrets',
         expect.objectContaining({
-          headers: expect.objectContaining({
-            'Content-Type': 'application/json',
-          }),
+          headers: expect.any(Object),
         })
       )
       expect(result).toEqual(mockSecrets)

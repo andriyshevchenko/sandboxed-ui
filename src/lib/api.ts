@@ -7,12 +7,18 @@ export class ApiClient {
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
+    const headers: HeadersInit = {
+      ...options?.headers,
+    }
+
+    // Only set Content-Type when a body is present to avoid unnecessary CORS preflights
+    if (options?.body && !('Content-Type' in (options?.headers ?? {}))) {
+      ;(headers as Record<string, string>)['Content-Type'] = 'application/json'
+    }
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+      headers,
     })
 
     if (!response.ok) {
