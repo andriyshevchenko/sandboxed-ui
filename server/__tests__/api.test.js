@@ -69,7 +69,6 @@ describe('SecureVault API', () => {
     });
 
     // POST /api/secrets
-    // POST /api/secrets
     app.post('/api/secrets', async (req, res) => {
       try {
         const { id, title, value, category, notes, createdAt, updatedAt } = req.body;

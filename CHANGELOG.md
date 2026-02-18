@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release of SecureVault
 - React-based frontend with modern UI
 - Express backend with OS keychain integration
-- Support for multiple secret categories (Password, API Key, Credential, Note, Other)
+- Support for multiple secret categories (Password, API Key, Token, Certificate, Note, Other)
 - Search and filter functionality
 - Copy to clipboard feature
 - Comprehensive unit tests for frontend

@@ -11,7 +11,7 @@ A secure, local secret manager application that uses your operating system's nat
 - 🔒 **Secure Storage**: All secrets are stored in your OS keychain (Keychain on macOS, Credential Vault on Windows, Secret Service API on Linux)
 - 🎨 **Modern UI**: Beautiful, dark-themed interface with smooth animations
 - 🔍 **Search & Filter**: Quickly find secrets by name or category
-- 📁 **Categories**: Organize secrets into Password, API Key, Note, Credential, or Other
+- 📁 **Categories**: Organize secrets into Password, API Key, Token, Certificate, Note, or Other
 - ✂️ **Copy to Clipboard**: One-click copy for quick access
 - 🔐 **Privacy First**: No cloud storage, all data stays on your machine
 - 📦 **Single Package**: Install globally via NPM - no Docker required
