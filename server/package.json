@@ -1,0 +1,16 @@
+{
+  "name": "securevault-server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Backend server for SecureVault secret manager",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "express": "^5.2.0",
+    "cors": "^2.8.5",
+    "keytar": "^7.9.0"
+  }
+}
