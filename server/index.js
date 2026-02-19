@@ -1,9 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import keytar from 'keytar';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import { getMetadataPath, loadMetadata, saveMetadata } from './metadataStore.js';
 
 const app = express();
 const PORT = 3001;
@@ -11,47 +9,6 @@ const SERVICE_NAME = 'SecureVault';
 
 // Valid secret categories - shared constant to avoid duplication
 const VALID_CATEGORIES = ['password', 'api-key', 'token', 'certificate', 'note', 'other'];
-
-// Metadata storage path
-const getMetadataPath = () => {
-  const homeDir = os.homedir();
-  const configDir = process.platform === 'win32' 
-    ? path.join(homeDir, 'AppData', 'Local', 'SecureVault')
-    : process.platform === 'darwin'
-    ? path.join(homeDir, 'Library', 'Application Support', 'SecureVault')
-    : path.join(homeDir, '.config', 'securevault');
-  
-  // Ensure directory exists
-  if (!fs.existsSync(configDir)) {
-    fs.mkdirSync(configDir, { recursive: true });
-  }
-  
-  return path.join(configDir, 'metadata.json');
-};
-
-// Load metadata from disk
-const loadMetadata = () => {
-  try {
-    const metadataPath = getMetadataPath();
-    if (fs.existsSync(metadataPath)) {
-      const data = fs.readFileSync(metadataPath, 'utf8');
-      return JSON.parse(data);
-    }
-  } catch (error) {
-    console.warn('⚠️  Failed to load metadata from disk:', error.message);
-  }
-  return [];
-};
-
-// Save metadata to disk
-const saveMetadata = (metadata) => {
-  try {
-    const metadataPath = getMetadataPath();
-    fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), 'utf8');
-  } catch (error) {
-    console.error(`❌ Failed to save metadata to ${getMetadataPath()}:`, error.message);
-  }
-};
 
 // CORS configuration - restrict to localhost origins for security
 const allowedOrigins = [
@@ -210,7 +167,7 @@ app.post('/api/secrets', async (req, res) => {
     const metadata = { id, title: title.trim(), category, notes, createdAt, updatedAt };
     secretsMetadata.push(metadata);
     
-    // Persist metadata to disk
+    // Persist metadata to disk (async, non-blocking)
     saveMetadata(secretsMetadata);
     
     res.status(201).json({ ...metadata, value });
@@ -270,7 +227,7 @@ app.put('/api/secrets/:id', async (req, res) => {
       updatedAt: updatedAt !== undefined ? updatedAt : existingMeta.updatedAt
     };
     
-    // Persist metadata to disk
+    // Persist metadata to disk (async, non-blocking)
     saveMetadata(secretsMetadata);
     
     res.json({ ...secretsMetadata[metaIndex], value: secretValue });
@@ -296,7 +253,7 @@ app.delete('/api/secrets/:id', async (req, res) => {
     // Delete metadata
     secretsMetadata.splice(metaIndex, 1);
     
-    // Persist metadata to disk
+    // Persist metadata to disk (async, non-blocking)
     saveMetadata(secretsMetadata);
     
     res.status(204).send();

@@ -1,0 +1,75 @@
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+
+// Metadata storage path with platform-specific defaults and env var support
+export const getMetadataPath = (baseDirOverride = null) => {
+  const homeDir = os.homedir();
+  
+  let configDir;
+  if (baseDirOverride) {
+    // Use override for testing
+    configDir = baseDirOverride;
+  } else if (process.platform === 'win32') {
+    // Prefer LOCALAPPDATA to respect non-standard Windows profiles
+    const localAppData = process.env.LOCALAPPDATA || path.join(homeDir, 'AppData', 'Local');
+    configDir = path.join(localAppData, 'SecureVault');
+  } else if (process.platform === 'darwin') {
+    configDir = path.join(homeDir, 'Library', 'Application Support', 'SecureVault');
+  } else {
+    // On Linux/Unix, prefer XDG_CONFIG_HOME when available
+    const xdgConfigHome = process.env.XDG_CONFIG_HOME || path.join(homeDir, '.config');
+    configDir = path.join(xdgConfigHome, 'securevault');
+  }
+  
+  // Ensure directory exists
+  if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true, mode: 0o700 });
+  }
+  
+  return path.join(configDir, 'metadata.json');
+};
+
+// Load metadata from disk with validation
+export const loadMetadata = (baseDirOverride = null) => {
+  try {
+    const metadataPath = getMetadataPath(baseDirOverride);
+    if (fs.existsSync(metadataPath)) {
+      const data = fs.readFileSync(metadataPath, 'utf8');
+      const parsed = JSON.parse(data);
+      
+      // Validate that loaded data is an array
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+      console.warn('⚠️  Metadata file has invalid format; expected an array. Falling back to empty list.');
+    }
+  } catch (error) {
+    console.warn('⚠️  Failed to load metadata from disk:', error.message);
+  }
+  return [];
+};
+
+// Save metadata to disk asynchronously with atomic write protection
+export const saveMetadata = async (metadata, baseDirOverride = null) => {
+  let metadataPath;
+  try {
+    metadataPath = getMetadataPath(baseDirOverride);
+    const dir = path.dirname(metadataPath);
+    const base = path.basename(metadataPath);
+    const tempPath = path.join(dir, `${base}.tmp-${process.pid}-${Date.now()}`);
+    const data = JSON.stringify(metadata, null, 2);
+
+    // Write to a temporary file first with restrictive permissions
+    fs.writeFileSync(tempPath, data, { encoding: 'utf8', mode: 0o600 });
+    
+    // Atomically replace the target file
+    fs.renameSync(tempPath, metadataPath);
+    
+    // Ensure the final file has restrictive permissions (in case it existed before)
+    fs.chmodSync(metadataPath, 0o600);
+  } catch (error) {
+    const targetPath = metadataPath || '[metadata path unavailable]';
+    console.error(`❌ Failed to save metadata to ${targetPath}:`, error.message);
+  }
+};

@@ -46,10 +46,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Secret Persistence**: Secrets now persist between server restarts. Secret metadata (title, category, notes, timestamps) is now saved to a local JSON file in the user's home directory, ensuring secrets remain accessible after the application restarts. This fixes the issue where secrets were becoming inaccessible on Windows 11 and other platforms after restarting the application.
 
 ### Changed
-- Secret metadata storage location is now platform-specific:
-  - Windows: `%LOCALAPPDATA%\SecureVault\metadata.json`
+- Secret metadata storage location is now platform-specific with environment variable support:
+  - Windows: `%LOCALAPPDATA%\SecureVault\metadata.json` (respects `LOCALAPPDATA` environment variable)
   - macOS: `~/Library/Application Support/SecureVault/metadata.json`
-  - Linux: `~/.config/securevault/metadata.json`
+  - Linux: `$XDG_CONFIG_HOME/securevault/metadata.json` (respects `XDG_CONFIG_HOME` environment variable)
+- Metadata file now has restrictive permissions (0o600 on POSIX systems) for enhanced security
+- Metadata writes use atomic file replacement to prevent corruption on crashes
+
+### Improved
+- Metadata persistence now uses async I/O to avoid blocking the event loop
+- Added validation for loaded metadata to handle corrupted files gracefully
+- Extracted persistence functions to separate module for better testability
 
 ## [Unreleased]
 

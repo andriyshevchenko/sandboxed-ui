@@ -166,9 +166,9 @@ When using SecureVault, your data is stored in two places:
    - **Linux**: Secret Service API (GNOME Keyring, KWallet, etc.)
 
 2. **Secret Metadata**: Stored in a local JSON file
-   - **Windows**: `%LOCALAPPDATA%\SecureVault\metadata.json`
+   - **Windows**: `%LOCALAPPDATA%\SecureVault\metadata.json` (uses `LOCALAPPDATA` environment variable or defaults to `%USERPROFILE%\AppData\Local`)
    - **macOS**: `~/Library/Application Support/SecureVault/metadata.json`
-   - **Linux**: `~/.config/securevault/metadata.json`
+   - **Linux**: `$XDG_CONFIG_HOME/securevault/metadata.json` (uses `XDG_CONFIG_HOME` environment variable or defaults to `~/.config`)
 
 ## Uninstalling
 
@@ -205,9 +205,9 @@ To completely remove all secrets and metadata:
 
 1. Uninstall the package: `npm uninstall -g @mcborov01/securevault`
 2. Remove the metadata file:
-   - **Windows**: Delete `%LOCALAPPDATA%\SecureVault\metadata.json`
+   - **Windows**: Delete `%LOCALAPPDATA%\SecureVault\metadata.json` (or `%USERPROFILE%\AppData\Local\SecureVault\metadata.json` if LOCALAPPDATA is not set)
    - **macOS**: Delete `~/Library/Application Support/SecureVault/metadata.json`
-   - **Linux**: Delete `~/.config/securevault/metadata.json`
+   - **Linux**: Delete `$XDG_CONFIG_HOME/securevault/metadata.json` (or `~/.config/securevault/metadata.json` if XDG_CONFIG_HOME is not set)
 3. Remove secrets from your OS keychain:
    - **Windows**: Open "Credential Manager" and delete entries starting with "SecureVault"
    - **macOS**: Open "Keychain Access" and search for "SecureVault"
