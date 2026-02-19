@@ -54,8 +54,7 @@ describe('Metadata Persistence Integration', () => {
       const metadataPath = getMetadataPath(tempDir);
       expect(fs.existsSync(metadataPath)).toBe(true);
       
-      // Simulate server restart: clear memory and reload from disk
-      secretsMetadata = null; // Clear memory
+      // Simulate server restart: reload from disk
       secretsMetadata = loadMetadata(tempDir);
       
       // Verify secrets were restored

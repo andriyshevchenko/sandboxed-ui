@@ -216,9 +216,9 @@ app.put('/api/secrets/:id', async (req, res) => {
     
     // Get current secret value
     let secretValue = await storage.getPassword(SERVICE_NAME, id);
-    const previousValue = secretValue;
     
     // Update the secret value in keychain only if a new value is provided
+    let previousValue;
     if (value !== undefined) {
       if (value === null || value === '') {
         return res.status(400).json({ error: 'Secret value cannot be empty' });
@@ -226,6 +226,7 @@ app.put('/api/secrets/:id', async (req, res) => {
       if (typeof value !== 'string') {
         return res.status(400).json({ error: 'Secret value must be a string' });
       }
+      previousValue = secretValue; // Capture for rollback
       await storage.setPassword(SERVICE_NAME, id, value);
       secretValue = value;
     }
@@ -246,7 +247,7 @@ app.put('/api/secrets/:id', async (req, res) => {
     } catch (persistError) {
       // Roll back: restore previous metadata and keychain value
       secretsMetadata[metaIndex] = existingMeta;
-      if (value !== undefined) {
+      if (previousValue !== undefined) {
         try {
           await storage.setPassword(SERVICE_NAME, id, previousValue);
         } catch (rollbackError) {
@@ -289,7 +290,7 @@ app.delete('/api/secrets/:id', async (req, res) => {
     } catch (persistError) {
       // Roll back: restore metadata to memory and keychain
       secretsMetadata.splice(metaIndex, 0, deletedMetadata);
-      if (deletedValue) {
+      if (deletedValue !== null && deletedValue !== undefined) {
         try {
           await storage.setPassword(SERVICE_NAME, id, deletedValue);
         } catch (rollbackError) {
