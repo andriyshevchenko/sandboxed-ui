@@ -167,7 +167,7 @@ app.post('/api/secrets', async (req, res) => {
     const metadata = { id, title: title.trim(), category, notes, createdAt, updatedAt };
     secretsMetadata.push(metadata);
     
-    // Persist metadata to disk (async, non-blocking)
+    // Persist metadata to disk
     saveMetadata(secretsMetadata);
     
     res.status(201).json({ ...metadata, value });
@@ -227,7 +227,7 @@ app.put('/api/secrets/:id', async (req, res) => {
       updatedAt: updatedAt !== undefined ? updatedAt : existingMeta.updatedAt
     };
     
-    // Persist metadata to disk (async, non-blocking)
+    // Persist metadata to disk
     saveMetadata(secretsMetadata);
     
     res.json({ ...secretsMetadata[metaIndex], value: secretValue });
@@ -253,7 +253,7 @@ app.delete('/api/secrets/:id', async (req, res) => {
     // Delete metadata
     secretsMetadata.splice(metaIndex, 1);
     
-    // Persist metadata to disk (async, non-blocking)
+    // Persist metadata to disk
     saveMetadata(secretsMetadata);
     
     res.status(204).send();

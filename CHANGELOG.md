@@ -54,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Metadata writes use atomic file replacement to prevent corruption on crashes
 
 ### Improved
-- Metadata persistence now uses async I/O to avoid blocking the event loop
+- Metadata persistence uses synchronous atomic writes for reliability and simplicity
 - Added validation for loaded metadata to handle corrupted files gracefully
 - Extracted persistence functions to separate module for better testability
 
