@@ -50,8 +50,8 @@ export const loadMetadata = (baseDirOverride = null) => {
   return [];
 };
 
-// Save metadata to disk asynchronously with atomic write protection
-export const saveMetadata = async (metadata, baseDirOverride = null) => {
+// Save metadata to disk with atomic write protection
+export const saveMetadata = (metadata, baseDirOverride = null) => {
   let metadataPath;
   try {
     metadataPath = getMetadataPath(baseDirOverride);

@@ -61,7 +61,7 @@ describe('Metadata Persistence', () => {
   });
 
   describe('saveMetadata and loadMetadata', () => {
-    it('should save and load metadata correctly', async () => {
+    it('should save and load metadata correctly', () => {
       const testMetadata = [
         {
           id: 'test-id-1',
@@ -82,7 +82,7 @@ describe('Metadata Persistence', () => {
       ];
 
       // Save metadata
-      await saveMetadata(testMetadata, tempDir);
+      saveMetadata(testMetadata, tempDir);
 
       // Load metadata
       const loadedMetadata = loadMetadata(tempDir);
@@ -98,25 +98,25 @@ describe('Metadata Persistence', () => {
       expect(loadedMetadata).toEqual([]);
     });
 
-    it('should handle empty metadata array', async () => {
-      await saveMetadata([], tempDir);
+    it('should handle empty metadata array', () => {
+      saveMetadata([], tempDir);
       const loadedMetadata = loadMetadata(tempDir);
       expect(loadedMetadata).toEqual([]);
     });
 
-    it('should persist metadata across multiple saves', async () => {
+    it('should persist metadata across multiple saves', () => {
       // Save initial metadata
       const metadata1 = [
         { id: '1', title: 'Secret 1', category: 'password', notes: 'Note 1', createdAt: Date.now(), updatedAt: Date.now() }
       ];
-      await saveMetadata(metadata1, tempDir);
+      saveMetadata(metadata1, tempDir);
 
       // Add more metadata
       const metadata2 = [
         { id: '1', title: 'Secret 1', category: 'password', notes: 'Note 1', createdAt: Date.now(), updatedAt: Date.now() },
         { id: '2', title: 'Secret 2', category: 'api-key', notes: 'Note 2', createdAt: Date.now(), updatedAt: Date.now() }
       ];
-      await saveMetadata(metadata2, tempDir);
+      saveMetadata(metadata2, tempDir);
 
       // Load and verify
       const loadedMetadata = loadMetadata(tempDir);
@@ -127,7 +127,7 @@ describe('Metadata Persistence', () => {
       expect(loadedMetadata[1].notes).toBe('Note 2');
     });
 
-    it('should validate loaded metadata is an array', async () => {
+    it('should validate loaded metadata is an array', () => {
       // Write invalid JSON (not an array)
       const metadataPath = getMetadataPath(tempDir);
       fs.writeFileSync(metadataPath, JSON.stringify({ invalid: 'object' }), 'utf8');
@@ -147,12 +147,12 @@ describe('Metadata Persistence', () => {
       expect(loadedMetadata).toEqual([]);
     });
 
-    it('should set restrictive file permissions', async () => {
+    it('should set restrictive file permissions', () => {
       const testMetadata = [
         { id: 'test', title: 'Test', category: 'password', createdAt: Date.now(), updatedAt: Date.now() }
       ];
       
-      await saveMetadata(testMetadata, tempDir);
+      saveMetadata(testMetadata, tempDir);
       
       const metadataPath = getMetadataPath(tempDir);
       const stats = fs.statSync(metadataPath);
