@@ -2,8 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-// Metadata storage path with platform-specific defaults and env var support
-export const getMetadataPath = (baseDirOverride = null) => {
+// Compute metadata path without side effects (doesn't create directory)
+const computeMetadataPath = (baseDirOverride = null) => {
   const homeDir = os.homedir();
   
   let configDir;
@@ -22,18 +22,26 @@ export const getMetadataPath = (baseDirOverride = null) => {
     configDir = path.join(xdgConfigHome, 'securevault');
   }
   
+  return path.join(configDir, 'metadata.json');
+};
+
+// Get metadata path and ensure directory exists (for write operations)
+export const getMetadataPath = (baseDirOverride = null) => {
+  const metadataPath = computeMetadataPath(baseDirOverride);
+  const configDir = path.dirname(metadataPath);
+  
   // Ensure directory exists
   if (!fs.existsSync(configDir)) {
     fs.mkdirSync(configDir, { recursive: true, mode: 0o700 });
   }
   
-  return path.join(configDir, 'metadata.json');
+  return metadataPath;
 };
 
-// Load metadata from disk with validation
+// Load metadata from disk with validation (doesn't create directory)
 export const loadMetadata = (baseDirOverride = null) => {
   try {
-    const metadataPath = getMetadataPath(baseDirOverride);
+    const metadataPath = computeMetadataPath(baseDirOverride);
     if (fs.existsSync(metadataPath)) {
       const data = fs.readFileSync(metadataPath, 'utf8');
       const parsed = JSON.parse(data);
