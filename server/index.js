@@ -167,8 +167,19 @@ app.post('/api/secrets', async (req, res) => {
     const metadata = { id, title: title.trim(), category, notes, createdAt, updatedAt };
     secretsMetadata.push(metadata);
     
-    // Persist metadata to disk
-    saveMetadata(secretsMetadata);
+    // Persist metadata to disk with rollback on failure
+    try {
+      saveMetadata(secretsMetadata);
+    } catch (persistError) {
+      // Roll back: remove metadata from memory and delete from keychain
+      secretsMetadata.pop();
+      try {
+        await storage.deletePassword(SERVICE_NAME, id);
+      } catch (rollbackError) {
+        console.error('Failed to rollback keychain entry:', rollbackError);
+      }
+      throw new Error('Failed to persist secret metadata');
+    }
     
     res.status(201).json({ ...metadata, value });
   } catch (error) {
@@ -205,6 +216,7 @@ app.put('/api/secrets/:id', async (req, res) => {
     
     // Get current secret value
     let secretValue = await storage.getPassword(SERVICE_NAME, id);
+    const previousValue = secretValue;
     
     // Update the secret value in keychain only if a new value is provided
     if (value !== undefined) {
@@ -219,16 +231,30 @@ app.put('/api/secrets/:id', async (req, res) => {
     }
     
     // Update metadata, preserving existing fields when omitted
-    secretsMetadata[metaIndex] = {
+    const updatedMeta = {
       ...existingMeta,
       title: title !== undefined ? title.trim() : existingMeta.title,
       category: category !== undefined ? category : existingMeta.category,
       notes: notes !== undefined ? notes : existingMeta.notes,
       updatedAt: updatedAt !== undefined ? updatedAt : existingMeta.updatedAt
     };
+    secretsMetadata[metaIndex] = updatedMeta;
     
-    // Persist metadata to disk
-    saveMetadata(secretsMetadata);
+    // Persist metadata to disk with rollback on failure
+    try {
+      saveMetadata(secretsMetadata);
+    } catch (persistError) {
+      // Roll back: restore previous metadata and keychain value
+      secretsMetadata[metaIndex] = existingMeta;
+      if (value !== undefined) {
+        try {
+          await storage.setPassword(SERVICE_NAME, id, previousValue);
+        } catch (rollbackError) {
+          console.error('Failed to rollback keychain value:', rollbackError);
+        }
+      }
+      throw new Error('Failed to persist secret metadata');
+    }
     
     res.json({ ...secretsMetadata[metaIndex], value: secretValue });
   } catch (error) {
@@ -247,14 +273,31 @@ app.delete('/api/secrets/:id', async (req, res) => {
       return res.status(404).json({ error: 'Secret not found' });
     }
     
+    // Save metadata and value before deletion for potential rollback
+    const deletedMetadata = secretsMetadata[metaIndex];
+    const deletedValue = await storage.getPassword(SERVICE_NAME, id);
+    
     // Delete from keychain
     await storage.deletePassword(SERVICE_NAME, id);
     
-    // Delete metadata
+    // Delete metadata from memory
     secretsMetadata.splice(metaIndex, 1);
     
-    // Persist metadata to disk
-    saveMetadata(secretsMetadata);
+    // Persist metadata to disk with rollback on failure
+    try {
+      saveMetadata(secretsMetadata);
+    } catch (persistError) {
+      // Roll back: restore metadata to memory and keychain
+      secretsMetadata.splice(metaIndex, 0, deletedMetadata);
+      if (deletedValue) {
+        try {
+          await storage.setPassword(SERVICE_NAME, id, deletedValue);
+        } catch (rollbackError) {
+          console.error('Failed to restore secret to keychain during rollback:', rollbackError);
+        }
+      }
+      throw new Error('Failed to persist metadata deletion');
+    }
     
     res.status(204).send();
   } catch (error) {

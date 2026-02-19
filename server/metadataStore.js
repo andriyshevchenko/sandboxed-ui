@@ -51,6 +51,7 @@ export const loadMetadata = (baseDirOverride = null) => {
 };
 
 // Save metadata to disk with atomic write protection
+// Throws error if save fails to allow callers to handle rollback
 export const saveMetadata = (metadata, baseDirOverride = null) => {
   let metadataPath;
   try {
@@ -71,5 +72,6 @@ export const saveMetadata = (metadata, baseDirOverride = null) => {
   } catch (error) {
     const targetPath = metadataPath || '[metadata path unavailable]';
     console.error(`❌ Failed to save metadata to ${targetPath}:`, error.message);
+    throw new Error(`Failed to persist metadata: ${error.message}`);
   }
 };

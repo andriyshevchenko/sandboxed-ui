@@ -146,5 +146,14 @@ describe('Metadata Persistence', () => {
         expect(mode).toBe(0o600);
       }
     });
+
+    it('should throw error when save fails', () => {
+      // Try to save to a path that will fail (read-only location or invalid)
+      const invalidDir = '/invalid/path/that/does/not/exist';
+      
+      expect(() => {
+        saveMetadata([], invalidDir);
+      }).toThrow('Failed to persist metadata');
+    });
   });
 });
